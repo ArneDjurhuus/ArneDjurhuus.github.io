@@ -1,12 +1,9 @@
-FROM node:18-slim
+FROM node:20-slim
 
 WORKDIR /usr/src/app
 
-# Add Debian Buster archive sources for libssl1.1 (required by Prisma)
-RUN echo "deb http://archive.debian.org/debian/ buster main" > /etc/apt/sources.list.d/buster.list \
-    && apt-get update -o Acquire::Check-Valid-Until=false \
-    && apt-get install -y --no-install-recommends libssl1.1 \
-    && rm /etc/apt/sources.list.d/buster.list
+# Install OpenSSL CLI to help Prisma detect OpenSSL version (provides libssl3)
+RUN apt-get update && apt-get install -y --no-install-recommends openssl && rm -rf /var/lib/apt/lists/*
 
 # Copy package files and install deps
 COPY package*.json ./
