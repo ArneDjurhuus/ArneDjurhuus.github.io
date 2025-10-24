@@ -1,0 +1,12 @@
+{
+  "name": "squadspace-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "postinstall": "npm run --workspaces postinstall"
+  }
+}

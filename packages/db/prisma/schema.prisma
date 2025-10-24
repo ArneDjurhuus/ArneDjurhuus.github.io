@@ -1,0 +1,66 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-1.1.x"]
+}
+
+model User {
+  id          String       @id @default(cuid())
+  email       String       @unique
+  name        String?
+  memberships Membership[]
+  tasks       Task[]       @relation("Assignee")
+}
+
+model Space {
+  id         String       @id @default(cuid())
+  name       String
+  slug       String       @unique
+  plan       String
+  memberships Membership[]
+  notes      Note[]
+  tasks      Task[]
+  eventLogs  EventLog[]
+}
+
+model Membership {
+  userId String
+  spaceId String
+  role    String
+  user    User   @relation(fields: [userId], references: [id])
+  space   Space  @relation(fields: [spaceId], references: [id])
+
+  @@id([userId, spaceId])
+}
+
+model Note {
+  id      String @id @default(cuid())
+  spaceId String
+  title   String
+  ydocId  String @unique
+  space   Space  @relation(fields: [spaceId], references: [id])
+}
+
+model Task {
+  id         String    @id @default(cuid())
+  spaceId    String
+  title      String
+  status     String
+  assigneeId String?
+  dueAt      DateTime?
+  space      Space     @relation(fields: [spaceId], references: [id])
+  assignee   User?     @relation("Assignee", fields: [assigneeId], references: [id])
+}
+
+model EventLog {
+  id        String   @id @default(cuid())
+  spaceId   String
+  type      String
+  payload   Json
+  createdAt DateTime @default(now())
+  space     Space    @relation(fields: [spaceId], references: [id])
+}

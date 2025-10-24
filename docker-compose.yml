@@ -1,0 +1,43 @@
+services:
+  db:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_USER: squad
+      POSTGRES_PASSWORD: squad
+      POSTGRES_DB: squadspace
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  api:
+    build: ./apps/api
+    ports:
+      - "4001:4000"
+    env_file:
+      - ./apps/api/.env
+    depends_on:
+      - db
+
+  web:
+    build: ./apps/web
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./apps/web/.env
+    depends_on:
+      - api
+
+  yjs-server:
+    build: ./apps/yjs-server
+    ports:
+      - "1234:1234"
+
+  ai:
+    build: ./apps/ai
+    ports:
+      - "8000:8000"
+
+volumes:
+  postgres_data:
