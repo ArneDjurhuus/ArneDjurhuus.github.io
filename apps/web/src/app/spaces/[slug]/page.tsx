@@ -66,21 +66,41 @@ export default async function SpacePage({ params }: { params: { slug: string } }
             <h2 style={{ marginTop: 0 }}>{col.title}</h2>
             <div style={{ display: 'grid', gap: 8 }}>
               {col.data.map((t:any) => (
-                <form key={t.id} action={async () => {
+                <form key={t.id} action={async (formData: FormData) => {
                   'use server';
+                  const target = String(formData.get('target') || '');
+                  const validTargets = ['todo','in_progress','done'];
+                  if (!validTargets.includes(target)) return;
                   const idx = tasks.findIndex(x => x.id === t.id);
                   if (idx !== -1) {
-                    tasks[idx] = { ...tasks[idx], status: col.status } as any;
-                    logEvent(space.id, 'task.updated', { id: t.id, status: col.status });
+                    tasks[idx] = { ...tasks[idx], status: target } as any;
+                    logEvent(space.id, 'task.updated', { id: t.id, status: target });
                   }
                   revalidatePath(`/spaces/${space.slug}`);
                 }}>
                   <div style={{ background: '#0f172a', border: '1px solid #1f2a44', borderRadius: 10, padding: 12 }}>
                     <div style={{ fontWeight: 700 }}>{t.title}</div>
                     <div style={{ opacity: 0.7, fontSize: 12, marginTop: 6 }}>#{t.id}</div>
-                    <button type="submit" style={{ marginTop: 10, padding: '6px 10px', borderRadius: 6, background: '#334155', color: 'white', border: 'none' }}>
-                      Move to {col.title}
-                    </button>
+                    <div style={{ marginTop: 10, display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                      <span style={{ fontSize: 12, opacity: 0.8 }}>Move to:</span>
+                      {[
+                        { key: 'todo', label: 'Todo' },
+                        { key: 'in_progress', label: 'In Progress' },
+                        { key: 'done', label: 'Done' },
+                      ]
+                        .filter(opt => opt.key !== t.status)
+                        .map(opt => (
+                          <button
+                            key={opt.key}
+                            name="target"
+                            value={opt.key}
+                            type="submit"
+                            style={{ padding: '6px 10px', borderRadius: 6, background: '#334155', color: 'white', border: 'none' }}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                    </div>
                   </div>
                 </form>
               ))}
