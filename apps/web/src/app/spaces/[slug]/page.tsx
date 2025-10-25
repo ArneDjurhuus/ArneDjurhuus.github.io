@@ -1,13 +1,20 @@
 import Link from 'next/link';
 
-import { spaces, tasks, nextId, logEvent } from '../../../server/mockDb';
+import { spaces, logEvent } from '../../../server/mockDb';
 import { events } from '../../../server/mockDb';
+import 'server-only';
 import { revalidatePath } from 'next/cache';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
 async function getSpace(slug: string) {
   const space = spaces.find(s => s.slug === slug);
   if (!space) throw new Error('Not found');
-  return { ...space, tasks: tasks.filter(t => t.spaceId === space.id) };
+  // Fetch tasks for this space from the API
+  const res = await fetch(`${API_URL}/tasks?spaceId=${space.id}`, { cache: 'no-store' });
+  const json = await res.json();
+  const list = Array.isArray(json?.data) ? json.data : [];
+  return { ...space, tasks: list };
 }
 
 function composeDigest(spaceId: string) {
@@ -51,8 +58,13 @@ export default async function SpacePage({ params }: { params: { slug: string } }
         'use server';
         const title = String(formData.get('title') || '').trim();
         if (!title) return;
-        const id = nextId('t');
-        tasks.push({ id, spaceId: space.id, title, status: 'todo' });
+        const res = await fetch(`${API_URL}/tasks`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title, spaceId: space.id }),
+        });
+        const created = await res.json();
+        const id = created?.data?.id || 't?';
         logEvent(space.id, 'task.created', { id, title });
         revalidatePath(`/spaces/${space.slug}`);
       }} style={{ marginTop: 16, display: 'flex', gap: 8 }}>
@@ -71,11 +83,12 @@ export default async function SpacePage({ params }: { params: { slug: string } }
                   const target = String(formData.get('target') || '');
                   const validTargets = ['todo','in_progress','done'];
                   if (!validTargets.includes(target)) return;
-                  const idx = tasks.findIndex(x => x.id === t.id);
-                  if (idx !== -1) {
-                    tasks[idx] = { ...tasks[idx], status: target } as any;
-                    logEvent(space.id, 'task.updated', { id: t.id, status: target });
-                  }
+                  await fetch(`${API_URL}/tasks/${t.id}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: target }),
+                  });
+                  logEvent(space.id, 'task.updated', { id: t.id, status: target });
                   revalidatePath(`/spaces/${space.slug}`);
                 }}>
                   <div style={{ background: '#0f172a', border: '1px solid #1f2a44', borderRadius: 10, padding: 12 }}>

@@ -12,10 +12,19 @@ async function main() {
     },
   });
 
+  // Ensure Demo Space has id '1' to match the web mock space
+  const existingDemo = await prisma.space.findUnique({ where: { slug: 'demo' } });
+  if (existingDemo && existingDemo.id !== '1') {
+    await prisma.membership.deleteMany({ where: { spaceId: existingDemo.id } });
+    await prisma.note.deleteMany({ where: { spaceId: existingDemo.id } });
+    await prisma.task.deleteMany({ where: { spaceId: existingDemo.id } });
+    await prisma.space.delete({ where: { id: existingDemo.id } });
+  }
   const demoSpace = await prisma.space.upsert({
     where: { slug: 'demo' },
     update: {},
     create: {
+      id: '1',
       name: 'Demo Space',
       slug: 'demo',
       plan: 'free',

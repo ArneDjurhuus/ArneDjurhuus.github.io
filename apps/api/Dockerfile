@@ -15,7 +15,7 @@ COPY . .
 # Generate the Prisma client
 RUN npx prisma generate
 
-# Start in dev/watch mode (works well for MVP)
-CMD ["npm", "run", "start:dev"]
+# Run migrations and seed, then start in dev/watch mode
+CMD ["npm", "run", "start:dev:db"]
 
 
