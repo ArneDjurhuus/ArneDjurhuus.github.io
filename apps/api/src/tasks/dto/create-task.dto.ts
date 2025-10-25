@@ -11,6 +11,10 @@ export class CreateTaskDto {
 
   @IsString()
   @IsOptional()
+  description?: string;
+
+  @IsString()
+  @IsOptional()
   assigneeId?: string;
 
   @IsISO8601()

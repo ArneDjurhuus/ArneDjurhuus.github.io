@@ -1,13 +1,16 @@
 import Image from 'next/image';
-
-// We'll call the Next.js rewrite at /api/* which proxies to the backend API.
-const apiBaseUrl = '';
 import Link from 'next/link';
-import { spaces as mockSpaces } from '../server/mockDb';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
 async function getSpaces() {
-  // Read from mock DB (server-only). Swap to fetch('/api/spaces') when backend is ready.
-  return mockSpaces;
+  const res = await fetch(`${API_URL}/spaces`, { cache: 'no-store' });
+  if (!res.ok) throw new Error(`API ${res.status}`);
+  const json = await res.json();
+  // Accept either raw array or { ok, data } wrapper for backward compatibility
+  if (Array.isArray(json)) return json;
+  if (json?.ok && Array.isArray(json.data)) return json.data;
+  throw new Error(json?.error || 'Failed to load');
 }
 
 export default async function Home() {

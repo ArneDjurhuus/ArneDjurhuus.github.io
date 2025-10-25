@@ -54,13 +54,14 @@ async function main() {
   await prisma.task.upsert({
     where: { id: 'clxryk4d7000008l4c34aef4e' },
     update: {},
-    create: {
+    create: ({
       id: 'clxryk4d7000008l4c34aef4e',
       spaceId: demoSpace.id,
       title: 'Complete the demo task',
+      description: 'Try creating and moving tasks. This one is assigned to the demo user.',
       status: 'todo',
       assigneeId: demoUser.id,
-    },
+    } as any),
   });
 }
 

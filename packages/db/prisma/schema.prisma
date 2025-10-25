@@ -50,6 +50,7 @@ model Task {
   spaceId    String
   title      String
   status     String
+  description String?
   assigneeId String?
   dueAt      DateTime?
   space      Space     @relation(fields: [spaceId], references: [id])

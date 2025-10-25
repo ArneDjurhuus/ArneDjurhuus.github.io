@@ -12,29 +12,31 @@ export class TasksService {
 
   async create(input: { title: string; spaceId: string; assigneeId?: string; dueAt?: string }) {
     return this.prisma.task.create({
-      data: {
+      data: ({
         title: input.title,
         spaceId: input.spaceId,
         status: 'todo',
+        description: (input as any).description ?? null,
         assigneeId: input.assigneeId ?? null,
         dueAt: input.dueAt ? new Date(input.dueAt) : null,
-      },
+      } as any),
     });
   }
 
-  async update(id: string, patch: { title?: string; assigneeId?: string | null; dueAt?: string | null; status?: TaskStatus }) {
+  async update(id: string, patch: { title?: string; description?: string | null; assigneeId?: string | null; dueAt?: string | null; status?: TaskStatus }) {
     // Ensure existence
     const existing = await this.prisma.task.findUnique({ where: { id } });
     if (!existing) throw new NotFoundException('Task not found');
 
     return this.prisma.task.update({
       where: { id },
-      data: {
+      data: ({
         title: patch.title ?? undefined,
+        description: patch.description === undefined ? undefined : patch.description,
         assigneeId: patch.assigneeId === undefined ? undefined : patch.assigneeId,
         dueAt: patch.dueAt === undefined ? undefined : patch.dueAt ? new Date(patch.dueAt) : null,
         status: patch.status ?? undefined,
-      },
+      } as any),
     });
   }
 }

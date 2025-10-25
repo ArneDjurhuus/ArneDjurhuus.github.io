@@ -9,6 +9,10 @@ export class UpdateTaskDto {
 
   @IsString()
   @IsOptional()
+  description?: string | null;
+
+  @IsString()
+  @IsOptional()
   assigneeId?: string | null;
 
   @IsISO8601()

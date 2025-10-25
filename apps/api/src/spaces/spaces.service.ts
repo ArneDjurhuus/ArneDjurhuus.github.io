@@ -8,4 +8,8 @@ export class SpacesService {
   findAll() {
     return this.prisma.space.findMany();
   }
+
+  findBySlug(slug: string) {
+    return this.prisma.space.findUnique({ where: { slug } });
+  }
 }
