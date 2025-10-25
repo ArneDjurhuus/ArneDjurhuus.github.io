@@ -18,4 +18,11 @@ export class SpacesController {
     if (!space) throw new NotFoundException('Space not found');
     return { ok: true, data: space };
   }
+
+  @Get(':slug/notes')
+  async listNotes(@Param('slug') slug: string) {
+    const notes = await this.spacesService.findNotesBySpaceSlug(slug);
+    if (notes === null) throw new NotFoundException('Space not found');
+    return { ok: true, data: notes };
+  }
 }

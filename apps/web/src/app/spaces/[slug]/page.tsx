@@ -49,6 +49,7 @@ export default async function SpaceDashboardPage({ params }: { params: { slug: s
     hasSubdomain = false;
   }
   const todoHref = hasSubdomain ? '/todo' : `/spaces/${space.slug}/todo`;
+  const notesHref = hasSubdomain ? `/notes` : `/spaces/${space.slug}/notes`;
 
   return (
     <main style={{ minHeight: '100vh', padding: 32, background: '#0b1220', color: 'white' }}>
@@ -61,6 +62,12 @@ export default async function SpaceDashboardPage({ params }: { params: { slug: s
           <div style={{ padding: 16, border: '1px solid #1f2a44', background: '#121a2b', borderRadius: 12, boxShadow: '0 6px 20px rgba(0,0,0,0.35)' }}>
             <h2 style={{ fontSize: 20, fontWeight: 700, color: '#4fd1c5', margin: 0 }}>To‑Do</h2>
             <p style={{ color: '#93a2b8', marginTop: 6, marginBottom: 0 }}>Capture tasks and track progress</p>
+          </div>
+        </Link>
+        <Link href={notesHref} style={{ textDecoration: 'none' }}>
+          <div style={{ padding: 16, border: '1px solid #1f2a44', background: '#121a2b', borderRadius: 12, boxShadow: '0 6px 20px rgba(0,0,0,0.35)' }}>
+            <h2 style={{ fontSize: 20, fontWeight: 700, color: '#4fd1c5', margin: 0 }}>Notes</h2>
+            <p style={{ color: '#93a2b8', marginTop: 6, marginBottom: 0 }}>Realtime collaborative editor</p>
           </div>
         </Link>
       </div>
