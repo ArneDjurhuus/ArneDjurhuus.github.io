@@ -10,6 +10,11 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U squad -d squadspace"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
 
   api:
     build: ./apps/api
@@ -19,7 +24,8 @@ services:
       - ./apps/api/.env
     command: ["sh", "-lc", "npx prisma generate && npx prisma migrate deploy && npx prisma db seed && npm run start:dev"]
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
   web:
     build: ./apps/web
