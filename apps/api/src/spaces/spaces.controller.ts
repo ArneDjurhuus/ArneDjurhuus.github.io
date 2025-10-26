@@ -1,6 +1,7 @@
 
-import { Controller, Get, NotFoundException, Param } from '@nestjs/common';
+import { Body, Controller, Get, NotFoundException, Param, Post } from '@nestjs/common';
 import { SpacesService } from './spaces.service';
+import { CreateNoteDto } from './dto/create-note.dto';
 
 @Controller('spaces')
 export class SpacesController {
@@ -24,5 +25,12 @@ export class SpacesController {
     const notes = await this.spacesService.findNotesBySpaceSlug(slug);
     if (notes === null) throw new NotFoundException('Space not found');
     return { ok: true, data: notes };
+  }
+
+  @Post(':slug/notes')
+  async createNote(@Param('slug') slug: string, @Body() body: CreateNoteDto) {
+    const note = await this.spacesService.createNoteBySpaceSlug(slug, body?.title);
+    if (note === null) throw new NotFoundException('Space not found');
+    return { ok: true, data: note };
   }
 }

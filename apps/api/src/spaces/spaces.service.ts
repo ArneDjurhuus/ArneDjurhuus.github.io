@@ -18,4 +18,20 @@ export class SpacesService {
     if (!space) return null;
     return this.prisma.note.findMany({ where: { spaceId: space.id }, orderBy: { title: 'asc' } });
   }
+
+  async createNoteBySpaceSlug(slug: string, title?: string) {
+    const space = await this.prisma.space.findUnique({ where: { slug } });
+    if (!space) return null;
+    // Generate a stable ydocId
+    const { randomUUID } = await import('crypto');
+    const ydocId = `note-${randomUUID()}`;
+    const note = await this.prisma.note.create({
+      data: {
+        spaceId: space.id,
+        title: title && title.trim().length > 0 ? title.trim() : 'Untitled',
+        ydocId,
+      },
+    });
+    return note;
+  }
 }

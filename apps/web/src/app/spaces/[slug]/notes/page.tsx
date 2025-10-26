@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { headers } from 'next/headers';
+import { redirect } from 'next/navigation';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
@@ -12,6 +13,31 @@ async function getNotes(slug: string) {
 
 export default async function NotesIndexPage({ params }: { params: { slug: string } }) {
   const { slug } = params;
+  async function createNoteAction(formData: FormData) {
+    'use server';
+    const title = String(formData.get('title') || '').trim();
+    const res = await fetch(`${API_URL}/spaces/${slug}/notes`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title }),
+      cache: 'no-store',
+    });
+    if (!res.ok) throw new Error('Failed to create note');
+    const json = await res.json();
+    const note = json?.data ?? json;
+    // Build redirect href subdomain-aware
+    const hdrs = headers();
+    const hostHeader = hdrs.get('host') || '';
+    const host = hostHeader.split(':')[0];
+    const parts = host.split('.');
+    const isPlainLocal = host === 'localhost' || host === '127.0.0.1';
+    let hasSubdomain = false;
+    if (parts.length === 2 && parts[1] === 'localhost') hasSubdomain = true;
+    else if (parts.length >= 3) hasSubdomain = true;
+    if (parts[0] === 'www' || isPlainLocal) hasSubdomain = false;
+    const toHref = hasSubdomain ? `/notes/${note.ydocId}` : `/spaces/${slug}/notes/${note.ydocId}`;
+    redirect(toHref);
+  }
   let notes: any[] = [];
   let error: string | null = null;
   try {
@@ -38,6 +64,27 @@ export default async function NotesIndexPage({ params }: { params: { slug: strin
       <Link href={backHref} style={{ color: '#4fd1c5' }}>&larr; Dashboard</Link>
       <h1 style={{ fontSize: 28, fontWeight: 800, marginTop: 16 }}>Notes</h1>
       <p style={{ color: '#93a2b8' }}>Choose a note to open the realtime editor.</p>
+
+      <form action={createNoteAction} style={{ marginTop: 12, display: 'flex', gap: 8 }}>
+        <input name="title" placeholder="New note title (optional)" style={{
+          flex: 1,
+          padding: '8px 10px',
+          borderRadius: 8,
+          border: '1px solid #1f2a44',
+          background: '#0f172a',
+          color: '#e2e8f0',
+          outline: 'none',
+        }} />
+        <button type="submit" style={{
+          padding: '8px 12px',
+          borderRadius: 8,
+          border: '1px solid #1f2a44',
+          background: '#121a2b',
+          color: '#4fd1c5',
+          fontWeight: 700,
+          cursor: 'pointer',
+        }}>New note</button>
+      </form>
 
       {error ? (
         <div style={{ color: '#ef4444', marginTop: 16 }}>{error}</div>
