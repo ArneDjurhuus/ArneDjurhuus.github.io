@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { headers } from 'next/headers';
+import { DigestButton } from '../../../components/DigestButton';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
@@ -8,6 +9,18 @@ async function getSpace(slug: string) {
   if (!res.ok) throw new Error('Not found');
   const json = await res.json();
   return json?.data ?? json;
+}
+
+async function getLatestDigest(spaceId: string) {
+  // Build absolute URL for server-side fetch
+  const hdrs = headers();
+  const host = hdrs.get('x-forwarded-host') || hdrs.get('host') || 'localhost:3000';
+  const proto = hdrs.get('x-forwarded-proto') || 'http';
+  const origin = `${proto}://${host}`;
+  const res = await fetch(`${origin}/api/digests?spaceId=${encodeURIComponent(spaceId)}`, { cache: 'no-store' });
+  if (!res.ok) return null;
+  const json = await res.json();
+  return json?.data ?? null;
 }
 
 export default async function SpaceDashboardPage({ params }: { params: { slug: string } }) {
@@ -51,11 +64,20 @@ export default async function SpaceDashboardPage({ params }: { params: { slug: s
   const todoHref = hasSubdomain ? '/todo' : `/spaces/${space.slug}/todo`;
   const notesHref = hasSubdomain ? `/notes` : `/spaces/${space.slug}/notes`;
 
+  const latestDigest = space ? await getLatestDigest(space.id) : null;
+
   return (
     <main style={{ minHeight: '100vh', padding: 32, background: '#0b1220', color: 'white' }}>
   {/* Headliner */}
   <h1 style={{ fontSize: 40, fontWeight: 800, marginTop: 8, textAlign: 'center', letterSpacing: 0.2 }}>{space.name}</h1>
       <div style={{ marginTop: 6, textAlign: 'center', color: '#93a2b8', fontSize: 16 }}>Dashboard</div>
+
+      {latestDigest && (
+        <div style={{ marginTop: 24, padding: 16, border: '1px solid #1f2a44', background: '#121a2b', borderRadius: 12 }}>
+          <h2 style={{ fontSize: 18, margin: 0, color: '#4fd1c5' }}>Latest Digest</h2>
+          <p style={{ marginTop: 8, color: '#93a2b8', whiteSpace: 'pre-wrap' }}>{latestDigest.summary}</p>
+        </div>
+      )}
 
       <div style={{ marginTop: 24, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 16 }}>
         <Link href={todoHref} style={{ textDecoration: 'none' }}>
@@ -71,6 +93,8 @@ export default async function SpaceDashboardPage({ params }: { params: { slug: s
           </div>
         </Link>
       </div>
+      {/* Digest trigger */}
+      <DigestButton spaceId={space.id} />
     </main>
   );
 }

@@ -10,6 +10,11 @@ export function middleware(req: NextRequest) {
   const hostNoPort = hostHeader.split(':')[0];
   const parts = hostNoPort.split('.');
 
+  // Do not rewrite API routes or Next internals
+  if (url.pathname.startsWith('/api')) {
+    return NextResponse.next();
+  }
+
   const isLocalRoot = hostNoPort === 'localhost' || hostNoPort === '127.0.0.1';
 
   // Identify subdomain in two dev forms (*.localhost) or any 3+ part domain (e.g., *.squadspace.me)
@@ -53,5 +58,6 @@ export function middleware(req: NextRequest) {
 
 // Match all paths except Next internals, assets, and files with extensions
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|assets|.*\\..*).*)'],
+  // Skip Next internals, assets, and API routes
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|assets|api|.*\\..*).*)'],
 };

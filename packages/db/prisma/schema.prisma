@@ -26,6 +26,7 @@ model Space {
   notes      Note[]
   tasks      Task[]
   eventLogs  EventLog[]
+  digests    Digest[]
 }
 
 model Membership {
@@ -65,4 +66,13 @@ model EventLog {
   payload   Json
   createdAt DateTime @default(now())
   space     Space    @relation(fields: [spaceId], references: [id])
+}
+
+model Digest {
+  id        String   @id @default(cuid())
+  spaceId   String
+  summary   String
+  createdAt DateTime @default(now())
+  space     Space    @relation(fields: [spaceId], references: [id])
+  @@index([spaceId, createdAt])
 }

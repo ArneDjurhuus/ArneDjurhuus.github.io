@@ -32,6 +32,9 @@ describe('Tasks (e2e)', () => {
           return updated;
         },
       },
+      eventLog: {
+        create: async ({ data }: any) => ({ id: `e_${Math.random().toString(36).slice(2)}`, ...data }),
+      },
     } as any;
 
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
