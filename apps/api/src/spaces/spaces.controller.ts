@@ -1,7 +1,7 @@
 
-import { Body, Controller, Get, NotFoundException, Param, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, NotFoundException, Param, Patch, Post, BadRequestException } from '@nestjs/common';
 import { SpacesService } from './spaces.service';
-import { CreateNoteDto } from './dto/create-note.dto';
+import { CreateNoteDto, UpdateNoteDto } from './dto';
 
 @Controller('spaces')
 export class SpacesController {
@@ -32,5 +32,25 @@ export class SpacesController {
     const note = await this.spacesService.createNoteBySpaceSlug(slug, body?.title);
     if (note === null) throw new NotFoundException('Space not found');
     return { ok: true, data: note };
+  }
+
+  @Patch(':slug/notes/:id')
+  async updateNote(
+    @Param('slug') slug: string,
+    @Param('id') id: string,
+    @Body() body: UpdateNoteDto,
+  ) {
+    const title = (body?.title ?? '').trim();
+    if (!title) throw new BadRequestException('Title is required');
+    const note = await this.spacesService.updateNoteTitle(slug, id, title);
+    if (note === null) throw new NotFoundException('Note or space not found');
+    return { ok: true, data: note };
+  }
+
+  @Delete(':slug/notes/:id')
+  async deleteNote(@Param('slug') slug: string, @Param('id') id: string) {
+    const deleted = await this.spacesService.deleteNote(slug, id);
+    if (deleted === null) throw new NotFoundException('Note or space not found');
+    return { ok: true, data: deleted };
   }
 }

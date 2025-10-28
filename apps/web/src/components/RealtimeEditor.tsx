@@ -73,6 +73,7 @@ export default function RealtimeEditor({ ydocId, userName }: { ydocId: string; u
   const [status, setStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connecting');
   const [synced, setSynced] = useState<boolean>(false);
   const [lastError, setLastError] = useState<string | null>(null);
+  const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
 
   useEffect(() => {
     const onStatus = (event: any) => setStatus(event.status);
@@ -95,6 +96,31 @@ export default function RealtimeEditor({ ydocId, userName }: { ydocId: string; u
       try { provider.off('connection-close', onClose); } catch {}
     };
   }, [provider]);
+
+  // Mark lastSavedAt when doc updates and we appear connected
+  useEffect(() => {
+    if (!ydoc) return;
+    const onUpdate = () => {
+      // naive assumption: when connected, updates are sent immediately
+      if (status === 'connected') setLastSavedAt(Date.now());
+    };
+    ydoc.on('update', onUpdate);
+    return () => {
+      ydoc.off('update', onUpdate as any);
+    };
+  }, [ydoc, status]);
+
+  function formatLastSaved(ts: number | null) {
+    if (!ts) return '';
+    const diff = Date.now() - ts;
+    if (diff < 5000) return 'just now';
+    const sec = Math.round(diff / 1000);
+    if (sec < 60) return `${sec}s ago`;
+    const min = Math.round(sec / 60);
+    if (min < 60) return `${min}m ago`;
+    const hr = Math.round(min / 60);
+    return `${hr}h ago`;
+  }
 
   const editor = (useEditor as any)({
     extensions: [
@@ -145,6 +171,11 @@ export default function RealtimeEditor({ ydocId, userName }: { ydocId: string; u
       <div style={{ fontSize: 12, marginBottom: 8, color: status === 'connected' ? '#22c55e' : status === 'connecting' ? '#f59e0b' : '#ef4444' }}>
         {status === 'connected' ? (synced ? 'Connected' : 'Connecting…') : status === 'connecting' ? 'Connecting…' : 'Disconnected'}
       </div>
+      {status === 'connected' && (
+        <div style={{ fontSize: 12, marginBottom: 8, color: '#93a2b8' }}>
+          Last saved {formatLastSaved(lastSavedAt)}
+        </div>
+      )}
       {lastError && (
         <div style={{ fontSize: 12, marginBottom: 8, color: '#ef4444' }}>WS error: {lastError}</div>
       )}

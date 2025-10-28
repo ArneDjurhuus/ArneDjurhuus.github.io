@@ -34,4 +34,21 @@ export class SpacesService {
     });
     return note;
   }
+
+  async updateNoteTitle(slug: string, id: string, title: string) {
+    const space = await this.prisma.space.findUnique({ where: { slug } });
+    if (!space) return null;
+    const note = await this.prisma.note.findUnique({ where: { id } });
+    if (!note || note.spaceId !== space.id) return null;
+    return this.prisma.note.update({ where: { id }, data: { title } });
+  }
+
+  async deleteNote(slug: string, id: string) {
+    const space = await this.prisma.space.findUnique({ where: { slug } });
+    if (!space) return null;
+    const note = await this.prisma.note.findUnique({ where: { id } });
+    if (!note || note.spaceId !== space.id) return null;
+    await this.prisma.note.delete({ where: { id } });
+    return { id };
+  }
 }

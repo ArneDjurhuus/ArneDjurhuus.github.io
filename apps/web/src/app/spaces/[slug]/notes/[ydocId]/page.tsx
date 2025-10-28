@@ -15,11 +15,11 @@ export default function NotePage({ params }: { params: { slug: string; ydocId: s
   if (parts.length === 2 && parts[1] === 'localhost') hasSubdomain = true; // demo.localhost
   else if (parts.length >= 3) hasSubdomain = true; // foo.squadspace.me
   if (parts[0] === 'www' || isPlainLocal) hasSubdomain = false;
-  const backHref = hasSubdomain ? '/' : `/spaces/${slug}`;
+  const backHref = hasSubdomain ? '/notes' : `/spaces/${slug}/notes`;
 
   return (
     <main style={{ minHeight: '100vh', padding: 32, background: '#0b1220', color: 'white' }}>
-      <Link href={backHref} style={{ color: '#4fd1c5' }}>&larr; Dashboard</Link>
+  <Link href={backHref} style={{ color: '#4fd1c5' }}>&larr; Back to Notes</Link>
       <h1 style={{ fontSize: 28, fontWeight: 800, marginTop: 16 }}>Realtime Note</h1>
       <p style={{ color: '#93a2b8' }}>Your edits sync live between browsers.</p>
 

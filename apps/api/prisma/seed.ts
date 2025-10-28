@@ -1,15 +1,20 @@
 import { PrismaClient } from '@prisma/client';
+import * as bcrypt from 'bcryptjs';
+// Fallback typing when running outside ts-node with node types
+declare const process: any;
 
 const prisma = new PrismaClient();
 
 async function main() {
+  const demoPasswordHash = await bcrypt.hash('password123', 10);
   const demoUser = await prisma.user.upsert({
     where: { email: 'demo@example.com' },
     update: {},
-    create: {
+    create: ({
       email: 'demo@example.com',
       name: 'Demo User',
-    },
+      passwordHash: demoPasswordHash,
+    } as any),
   });
 
   // Ensure Demo Space has id '1' to match the web mock space

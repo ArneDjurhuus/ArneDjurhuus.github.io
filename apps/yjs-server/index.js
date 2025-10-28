@@ -48,6 +48,17 @@ async function appendUpdate(file, update) {
   await fs.appendFile(file, Buffer.concat([lenBuf, Buffer.from(update)]));
 }
 
+async function writeSnapshot(file, update) {
+  const lenBuf = Buffer.allocUnsafe(4);
+  lenBuf.writeUInt32BE(update.length, 0);
+  const tmp = `${file}.tmp`;
+  await fs.writeFile(tmp, Buffer.concat([lenBuf, Buffer.from(update)]));
+  await fs.rename(tmp, file);
+}
+
+const updateCounters = new Map();
+const COMPACT_EVERY = parseInt(process.env.YJS_COMPACT_EVERY || '50', 10);
+
 setPersistence({
   bindState: async (docName, ydoc) => {
     await ensureDir();
@@ -60,9 +71,23 @@ setPersistence({
     } catch (e) {
       console.error('[yjs] failed to read updates for', docName, e?.message || e);
     }
+    updateCounters.set(docName, updateCounters.get(docName) || 0);
     ydoc.on('update', async (update) => {
       try {
         await appendUpdate(file, update);
+        const count = (updateCounters.get(docName) || 0) + 1;
+        updateCounters.set(docName, count);
+        if (COMPACT_EVERY > 0 && count % COMPACT_EVERY === 0) {
+          try {
+            const state = Y.encodeStateAsUpdate(ydoc);
+            await writeSnapshot(file, state);
+            // reset counter after compaction
+            updateCounters.set(docName, 0);
+            console.log(`[yjs] compacted ${docName}`);
+          } catch (e) {
+            console.error('[yjs] compaction failed for', docName, e?.message || e);
+          }
+        }
       } catch (e) {
         console.error('[yjs] failed to persist update', e?.message || e);
       }

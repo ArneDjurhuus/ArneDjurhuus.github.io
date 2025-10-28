@@ -38,6 +38,31 @@ export default async function NotesIndexPage({ params }: { params: { slug: strin
     const toHref = hasSubdomain ? `/notes/${note.ydocId}` : `/spaces/${slug}/notes/${note.ydocId}`;
     redirect(toHref);
   }
+
+  async function renameNoteAction(formData: FormData) {
+    'use server';
+    const id = String(formData.get('id') || '');
+    const title = String(formData.get('title') || '').trim();
+    if (!id || !title) return;
+    const res = await fetch(`${API_URL}/spaces/${slug}/notes/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title }),
+      cache: 'no-store',
+    });
+    if (!res.ok) throw new Error('Failed to rename note');
+  }
+
+  async function deleteNoteAction(formData: FormData) {
+    'use server';
+    const id = String(formData.get('id') || '');
+    if (!id) return;
+    const res = await fetch(`${API_URL}/spaces/${slug}/notes/${id}`, {
+      method: 'DELETE',
+      cache: 'no-store',
+    });
+    if (!res.ok) throw new Error('Failed to delete note');
+  }
   let notes: any[] = [];
   let error: string | null = null;
   try {
@@ -94,19 +119,63 @@ export default async function NotesIndexPage({ params }: { params: { slug: strin
             <li style={{ color: '#93a2b8' }}>No notes yet.</li>
           )}
           {notes.map((n: any) => (
-            <li key={n.id}>
-              <Link href={toNoteHref(n.ydocId)} style={{
-                display: 'block',
-                padding: 12,
-                border: '1px solid #1f2a44',
-                background: '#121a2b',
-                borderRadius: 10,
-                textDecoration: 'none',
-                color: '#e2e8f0',
-              }}>
-                <div style={{ fontWeight: 700 }}>{n.title}</div>
-                <div style={{ fontSize: 12, color: '#93a2b8', marginTop: 4 }}>ydoc: {n.ydocId}</div>
-              </Link>
+            <li key={n.id} style={{
+              padding: 12,
+              border: '1px solid #1f2a44',
+              background: '#121a2b',
+              borderRadius: 10,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+            }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <Link href={toNoteHref(n.ydocId)} style={{
+                  textDecoration: 'none',
+                  color: '#e2e8f0',
+                  display: 'block',
+                }}>
+                  <div style={{ fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{n.title}</div>
+                  <div style={{ fontSize: 12, color: '#93a2b8', marginTop: 4 }}>ydoc: {n.ydocId}</div>
+                </Link>
+              </div>
+              <form action={renameNoteAction} style={{ display: 'flex', gap: 8 }}>
+                <input type="hidden" name="id" value={n.id} />
+                <input
+                  name="title"
+                  defaultValue={n.title}
+                  placeholder="Rename note"
+                  style={{
+                    padding: '6px 8px',
+                    borderRadius: 8,
+                    border: '1px solid #1f2a44',
+                    background: '#0f172a',
+                    color: '#e2e8f0',
+                    outline: 'none',
+                    width: 200,
+                  }}
+                />
+                <button type="submit" style={{
+                  padding: '6px 10px',
+                  borderRadius: 8,
+                  border: '1px solid #1f2a44',
+                  background: '#0b172b',
+                  color: '#a3e635',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}>Rename</button>
+              </form>
+              <form action={deleteNoteAction}>
+                <input type="hidden" name="id" value={n.id} />
+                <button type="submit" style={{
+                  padding: '6px 10px',
+                  borderRadius: 8,
+                  border: '1px solid #1f2a44',
+                  background: '#2a0f16',
+                  color: '#ef4444',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}>Delete</button>
+              </form>
             </li>
           ))}
         </ul>
